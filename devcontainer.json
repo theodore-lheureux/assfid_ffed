@@ -1,0 +1,7 @@
+{
+	"name": "Jetson Rust Dev",
+	"dockerComposeFile": "compose.jetson.yml",
+	"service": "app",
+	"workspaceFolder": "/workspace",
+	"remoteUser": "root"
+}
