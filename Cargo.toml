@@ -4,16 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-env_logger = "0.11.8"
-log = "0.4.28"
 rawloader = "0.37.1"
 tiff = "0.10"
 thiserror = "2.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [dev-dependencies]
 tempfile = "3.0"
-criterion = { version = "0.5", features = ["html_reports"] }
-
-[[bench]]
-name = "arw_to_tiff"
-harness = false
