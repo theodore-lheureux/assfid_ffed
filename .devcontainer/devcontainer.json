@@ -1,0 +1,7 @@
+{
+	"name": "Jetson Rust Dev",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	"remoteUser": "root"
+}
