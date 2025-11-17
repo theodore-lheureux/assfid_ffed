@@ -7,6 +7,7 @@ pub mod raw;
 pub mod tiff;
 pub mod conversions;
 pub mod common;
+pub mod debayer;
 
 pub use common::{
     ConversionError,
@@ -29,4 +30,9 @@ pub use tiff::{
 
 pub use conversions::{
     RawToTiffPipeline,
+};
+
+pub use debayer::{
+    RgbImageData,
+    CudaDebayer,
 };

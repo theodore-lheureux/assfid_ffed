@@ -65,7 +65,7 @@ impl RawImageReader for RawLoaderReader {
         
         // Convert RAW data to u16 format
         // Integer data is cast directly, float data (normalized 0.0-1.0) is scaled to u16 range
-        let data: Vec<u16> = match decoded.data {
+        let data: Vec<u16> = match &decoded.data {
             RawloaderImageData::Integer(values) => {
                 values.iter().map(|&v| v as u16).collect()
             }
@@ -91,12 +91,45 @@ impl RawImageReader for RawLoaderReader {
         };
         
         debug!("Calculated bits_per_sample: {} (max white level: {})", bits_per_sample, max_white_level);
+        debug!("Black levels: {:?}", decoded.blacklevels);
+        debug!("White levels: {:?}", decoded.whitelevels);
+        debug!("make: {}", decoded.make);
+        debug!("model: {}", decoded.model);
+        debug!("clean_make: {}", decoded.clean_make);
+        debug!("clean_model: {}", decoded.clean_model);
+        debug!("width: {}", decoded.width);
+        debug!("height: {}", decoded.height);
+        debug!("cpp: {}", decoded.cpp);
+        debug!("wb_coeffs: {:?}", decoded.wb_coeffs);
+        debug!("whitelevels: {:?}", decoded.whitelevels);
+        debug!("blacklevels: {:?}", decoded.blacklevels);
+        debug!("xyz_to_cam: {:?}", decoded.xyz_to_cam);
+        debug!("cfa: {}", decoded.cfa.to_string());
+        debug!("crops: {:?}", decoded.crops);
+        debug!("blackareas: {:?}", decoded.blackareas);
+        debug!("orientation: {:?}", decoded.orientation);
+  
+        
+        // Use rawloader's normalized cam_to_xyz which properly handles the inversion
+        let cam_to_xyz = decoded.cam_to_xyz_normalized();
+        debug!("Camera to XYZ (normalized): {:?}", cam_to_xyz);
+        
+        let xyz_to_cam = decoded.xyz_to_cam;
+        
+        let wb_coeffs = decoded.wb_coeffs;
+        let blacklevels = decoded.blacklevels;
+        let whitelevels = decoded.whitelevels;
         
         Ok(RawImageData {
             width,
             height,
             data,
             bits_per_sample,
+            wb_coeffs,
+            blacklevels,
+            whitelevels,
+            cam_to_xyz,
+            xyz_to_cam,
         })
     }
 }

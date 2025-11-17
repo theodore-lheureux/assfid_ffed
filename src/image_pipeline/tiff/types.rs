@@ -25,14 +25,17 @@ pub struct ConversionConfig {
     pub predictor: Option<u16>,
     /// Whether to validate image dimensions before conversion
     pub validate_dimensions: bool,
+    /// Whether to debayer the image to RGB (true) or output grayscale Bayer (false)
+    pub debayer: bool,
 }
 
 impl Default for ConversionConfig {
     fn default() -> Self {
         Self {
-            compression: TiffCompression::DeflateFast,
+            compression: TiffCompression::None,
             predictor: None,
             validate_dimensions: true,
+            debayer: false,
         }
     }
 }
@@ -49,6 +52,7 @@ pub struct ConversionConfigBuilder {
     compression: Option<TiffCompression>,
     predictor: Option<Option<u16>>,
     validate_dimensions: Option<bool>,
+    debayer: Option<bool>,
 }
 
 impl ConversionConfigBuilder {
@@ -67,12 +71,19 @@ impl ConversionConfigBuilder {
         self
     }
     
+    pub fn debayer(mut self, enable: bool) -> Self {
+        self.debayer = Some(enable);
+        self
+    }
+    
     pub fn build(self) -> ConversionConfig {
         let default = ConversionConfig::default();
         ConversionConfig {
             compression: self.compression.unwrap_or(default.compression),
             predictor: self.predictor.unwrap_or(default.predictor),
             validate_dimensions: self.validate_dimensions.unwrap_or(default.validate_dimensions),
+            debayer: self.debayer.unwrap_or(default.debayer),
         }
     }
 }
+

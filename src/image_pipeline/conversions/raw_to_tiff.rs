@@ -6,31 +6,37 @@ use crate::image_pipeline::{
     common::error::{ConversionError, Result},
     raw::{RawImageReader, RawLoaderReader},
     tiff::{TiffWriter, StandardTiffWriter, ConversionConfig},
+    debayer::NppDebayer,
 };
 
 pub struct RawToTiffPipeline<R: RawImageReader, W: TiffWriter> {
     reader: R,
     writer: W,
     config: ConversionConfig,
+    debayer: Option<NppDebayer>,
 }
 
 impl RawToTiffPipeline<RawLoaderReader, StandardTiffWriter> {
-    pub fn new(config: ConversionConfig) -> Self {
-        Self {
-            reader: RawLoaderReader,
-            writer: StandardTiffWriter,
-            config,
-        }
+    pub fn new(config: ConversionConfig) -> Result<Self> {
+        Self::with_custom(RawLoaderReader, StandardTiffWriter, config)
     }
 }
 
 impl<R: RawImageReader, W: TiffWriter> RawToTiffPipeline<R, W> {
-    pub fn with_custom(reader: R, writer: W, config: ConversionConfig) -> Self {
-        Self {
+    pub fn with_custom(reader: R, writer: W, config: ConversionConfig) -> Result<Self> {
+        let debayer = if config.debayer {
+            Some(NppDebayer::new()
+                .map_err(|e| ConversionError::CudaError(format!("Failed to initialize NPP: {}", e)))?)
+        } else {
+            None
+        };
+        
+        Ok(Self {
             reader,
             writer,
             config,
-        }
+            debayer,
+        })
     }
 
     fn validate_dimensions(&self, width: usize, height: usize) -> Result<()> {
@@ -62,16 +68,35 @@ impl<R: RawImageReader, W: TiffWriter> RawToTiffPipeline<R, W> {
             self.validate_dimensions(raw_image.width, raw_image.height)?;
         }
 
-        {
+        // Debayer if configured
+        if let Some(ref debayer) = self.debayer {
+            let rgb_image = {
+                let _span = tracing::info_span!("debayer").entered();
+                debayer.process(&raw_image)
+                    .map_err(|e| ConversionError::CudaError(format!("Debayering failed: {}", e)))?
+            };
+            
+            let _span = tracing::info_span!("encode_tiff").entered();
+            self.writer.write_rgb_tiff(&rgb_image, output, &self.config)?;
+            
+            info!(
+                width = rgb_image.width,
+                height = rgb_image.height,
+                format = "RGB",
+                "Conversion complete"
+            );
+        } else {
             let _span = tracing::info_span!("encode_tiff").entered();
             self.writer.write_tiff(&raw_image, output, &self.config)?;
+            
+            info!(
+                width = raw_image.width,
+                height = raw_image.height,
+                format = "Grayscale Bayer",
+                "Conversion complete"
+            );
         }
 
-        info!(
-            width = raw_image.width,
-            height = raw_image.height,
-            "Conversion complete"
-        );
         Ok(())
     }
 

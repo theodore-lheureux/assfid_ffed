@@ -17,8 +17,11 @@ pub enum ConversionError {
     #[error("Invalid image dimensions: width={0}, height={1}")]
     InvalidDimensions(usize, usize),
     
-    #[error("Unsupported color space or bit depth")]
-    UnsupportedFormat,
+    #[error("Unsupported format: {0}")]
+    UnsupportedFormat(String),
+    
+    #[error("CUDA error: {0}")]
+    CudaError(String),
     
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
