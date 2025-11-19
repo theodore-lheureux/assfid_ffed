@@ -11,6 +11,7 @@ cudarc = { version = "0.18.0", features = ["cuda-12020"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1.0.100"
+bayer = { version = "0.1", features = ["rayon"] }
 
 
 [dev-dependencies]

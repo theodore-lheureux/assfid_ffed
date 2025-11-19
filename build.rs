@@ -1,8 +1,18 @@
 use std::{env, path::PathBuf, process::Command};
 
 fn main() {
-    // Re-run when CUDA sources change
+    println!("cargo::rustc-check-cfg=cfg(jetson_cuda)");
     println!("cargo:rerun-if-changed=src/cuda");
+    println!("cargo:rerun-if-changed=npp_wrapper.h");
+
+    let target = std::env::var("TARGET").unwrap();
+    
+    if !target.contains("aarch64-unknown-linux") {
+        println!("cargo:warning=Building without CUDA/NPP (not on Jetson)");
+        return;
+    }
+
+    println!("cargo:rustc-cfg=jetson_cuda");
 
     let out_dir = PathBuf::from(env::var("OUT_DIR").unwrap());
 

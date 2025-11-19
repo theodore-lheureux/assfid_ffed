@@ -6,14 +6,18 @@ use crate::image_pipeline::{
     common::error::{ConversionError, Result},
     raw::{RawImageReader, RawLoaderReader},
     tiff::{TiffWriter, StandardTiffWriter, ConversionConfig},
-    debayer::NppDebayer,
 };
+
+#[cfg(jetson_cuda)]
+use crate::image_pipeline::debayer::NppDebayer as Debayer;
+#[cfg(not(jetson_cuda))]
+use crate::image_pipeline::debayer::CpuDebayer as Debayer;
 
 pub struct RawToTiffPipeline<R: RawImageReader, W: TiffWriter> {
     reader: R,
     writer: W,
     config: ConversionConfig,
-    debayer: Option<NppDebayer>,
+    debayer: Option<Debayer>,
 }
 
 impl RawToTiffPipeline<RawLoaderReader, StandardTiffWriter> {
@@ -25,7 +29,7 @@ impl RawToTiffPipeline<RawLoaderReader, StandardTiffWriter> {
 impl<R: RawImageReader, W: TiffWriter> RawToTiffPipeline<R, W> {
     pub fn with_custom(reader: R, writer: W, config: ConversionConfig) -> Result<Self> {
         let debayer = if config.debayer {
-            Some(NppDebayer::new()
+            Some(Debayer::new()
                 .map_err(|e| ConversionError::CudaError(format!("Failed to initialize NPP: {}", e)))?)
         } else {
             None

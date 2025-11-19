@@ -35,4 +35,5 @@ pub use conversions::{
 pub use debayer::{
     RgbImageData,
     CudaDebayer,
+    CpuDebayer,
 };
