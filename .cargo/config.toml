@@ -1,0 +1,4 @@
+[alias]
+portainer = "xtask portainer"
+deploy = "xtask deploy"
+xtask = "run --package xtask --"

@@ -1,0 +1,58 @@
+services:
+  portainer:
+    image: portainer/portainer-ce:latest
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+
+  caddy:
+    image: caddy:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    command: caddy reverse-proxy --from http://portainer.localhost --to portainer:9000
+
+  portainer-init:
+    image: alpine/curl
+    restart: "no"
+    depends_on:
+      - portainer
+    environment:
+      PORTAINER_ADMIN_PASSWORD: ${PORTAINER_ADMIN_PASSWORD}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        BASE=http://portainer:9000
+
+        echo "Waiting for Portainer to be ready..."
+        until curl -sf $$BASE/api/status > /dev/null; do sleep 2; done
+
+        INIT_RESP=$$(curl -s -X POST $$BASE/api/users/admin/init \
+          -H 'Content-Type: application/json' \
+          -d "{\"Username\":\"admin\",\"Password\":\"$$PORTAINER_ADMIN_PASSWORD\"}")
+
+        TOKEN=$$(curl -s -X POST $$BASE/api/auth \
+          -H 'Content-Type: application/json' \
+          -d "{\"username\":\"admin\",\"password\":\"$$PORTAINER_ADMIN_PASSWORD\"}" | \
+          sed 's/.*"jwt":"\([^"]*\)".*/\1/')
+
+        EXISTING=$$(curl -s -H "Authorization: Bearer $$TOKEN" \
+          $$BASE/api/endpoints | grep -ci 'jetson' || true)
+
+        if [ "$$EXISTING" = "0" ]; then
+          curl -s -X POST $$BASE/api/endpoints \
+            -H "Authorization: Bearer $$TOKEN" \
+            -F 'Name=Jetson' \
+            -F 'EndpointCreationType=2' \
+            -F 'URL=tcp://jetson.lan:9001' \
+            -F 'TLS=true' \
+            -F 'TLSSkipVerify=true' \
+            -F 'TLSSkipClientVerify=true' > /dev/null
+          echo "Jetson endpoint added."
+        else
+          echo "Jetson endpoint already exists, skipping."
+        fi
+
+volumes:
+  portainer_data:

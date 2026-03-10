@@ -1,8 +1,34 @@
+- name: Pre-flight checks
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Fetch remote git state
+      command: git fetch
+      args:
+        chdir: "{{ playbook_dir }}/.."
+      changed_when: false
+
+    - name: Check if local branch is behind remote
+      command: git status --porcelain=v2 --branch
+      args:
+        chdir: "{{ playbook_dir }}/.."
+      register: git_status
+      changed_when: false
+
+    - name: Prompt to continue if behind remote
+      pause:
+        prompt: "Local branch is behind remote. Deploy anyway? (yes/no)"
+      register: user_confirm
+      when: "'behind' in git_status.stdout"
+
+    - name: Abort if user declined
+      fail:
+        msg: "Aborted by user."
+      when: "'behind' in git_status.stdout and user_confirm.user_input | lower != 'yes'"
+
 - name: Setup Jetson image pipeline
   hosts: jetson
   become: true
-  vars_files:
-    - group_vars/vault.yml
   roles:
     - docker
     - rabbitmq

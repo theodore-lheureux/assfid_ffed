@@ -32,5 +32,14 @@ services:
           devices:
             - capabilities: [gpu]
 
+  portainer_agent:
+    image: portainer/agent:latest
+    restart: unless-stopped
+    ports:
+      - "9001:9001"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/volumes:/var/lib/docker/volumes
+
 volumes:
   rabbitmq_data:
