@@ -1,0 +1,17 @@
+- name: Create RabbitMQ config directory
+  file:
+    path: "{{ app_dir }}/rabbitmq"
+    state: directory
+    mode: "0755"
+
+- name: Deploy RabbitMQ definitions
+  template:
+    src: definitions.json.j2
+    dest: "{{ app_dir }}/rabbitmq/definitions.json"
+    mode: "0644"
+
+- name: Deploy RabbitMQ config
+  copy:
+    src: rabbitmq.conf
+    dest: "{{ app_dir }}/rabbitmq/rabbitmq.conf"
+    mode: "0644"

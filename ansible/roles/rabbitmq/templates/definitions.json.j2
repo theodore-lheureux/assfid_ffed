@@ -1,0 +1,55 @@
+{
+  "rabbit_version": "3.13",
+  "rabbitmq_version": "3.13",
+  "users": [
+    {
+      "name": "{{ rabbitmq_user }}",
+      "password": "{{ rabbitmq_password }}",
+      "tags": ["administrator"]
+    }
+  ],
+  "vhosts": [
+    { "name": "{{ rabbitmq_vhost }}" }
+  ],
+  "permissions": [
+    {
+      "user": "{{ rabbitmq_user }}",
+      "vhost": "{{ rabbitmq_vhost }}",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "queues": [
+    {
+      "name": "tiff_queue",
+      "vhost": "{{ rabbitmq_vhost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "model_data_queue",
+      "vhost": "{{ rabbitmq_vhost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "indices_queue",
+      "vhost": "{{ rabbitmq_vhost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "transmission_queue",
+      "vhost": "{{ rabbitmq_vhost }}",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "exchanges": [],
+  "bindings": []
+}

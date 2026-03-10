@@ -1,5 +1,5 @@
-use ffed_protosat_rs::image_pipeline::{ConversionConfig, RawToTiffPipeline, TiffCompression};
-use ffed_protosat_rs::logger;
+use assfid_ffed::image_pipeline::{ConversionConfig, RawToTiffPipeline, TiffCompression};
+use assfid_ffed::logger;
 
 use tracing::{error, info};
 

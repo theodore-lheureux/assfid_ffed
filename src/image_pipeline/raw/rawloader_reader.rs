@@ -45,8 +45,8 @@ impl RawImageReader for RawLoaderReader {
     /// # Examples
     ///
     /// ```no_run
-    /// use ffed_protosat_rs::image_pipeline::arw_to_tiff::rawloader_reader::RawLoaderReader;
-    /// use ffed_protosat_rs::image_pipeline::arw_to_tiff::reader::RawImageReader;
+    /// use assfid_ffed::image_pipeline::arw_to_tiff::rawloader_reader::RawLoaderReader;
+    /// use assfid_ffed::image_pipeline::arw_to_tiff::reader::RawImageReader;
     ///
     /// let reader = RawLoaderReader;
     /// let raw_bytes = std::fs::read("image.arw").unwrap();

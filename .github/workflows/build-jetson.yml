@@ -20,7 +20,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE: theodore-lheureux/ffed_protosat_rs
+  IMAGE: theodore-lheureux/assfid_ffed
 
 jobs:
   build-and-push:

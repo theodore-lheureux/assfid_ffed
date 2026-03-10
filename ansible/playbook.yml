@@ -1,0 +1,9 @@
+- name: Setup Jetson image pipeline
+  hosts: jetson
+  become: true
+  vars_files:
+    - group_vars/vault.yml
+  roles:
+    - docker
+    - rabbitmq
+    - app

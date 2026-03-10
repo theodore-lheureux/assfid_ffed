@@ -1,0 +1,48 @@
+- name: Create app directory
+  file:
+    path: "{{ app_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Load deploy.env defaults
+  community.general.read_csv:
+    path: "{{ playbook_dir }}/../deploy.env"
+    fieldnames: key,value
+    delimiter: "="
+  register: deploy_env_raw
+  delegate_to: localhost
+  become: false
+
+- name: Parse deploy.env into dict
+  set_fact:
+    deploy_env: "{{ deploy_env_raw.list | selectattr('key', 'match', '^[^#]') | items2dict(key_name='key', value_name='value') }}"
+
+- name: Resolve image tag (CLI override wins, then deploy.env, then 'latest')
+  set_fact:
+    resolved_image_tag: "{{ app_image_tag | default(deploy_env.APP_IMAGE_TAG) | default('latest') }}"
+    resolved_image: "{{ app_image_registry }}/{{ app_image_repo }}:{{ app_image_tag | default(deploy_env.APP_IMAGE_TAG) | default('latest') }}"
+
+- name: Log into GHCR
+  community.docker.docker_login:
+    registry: "{{ app_image_registry }}"
+    username: "{{ ghcr_username }}"
+    password: "{{ ghcr_token }}"
+
+- name: Pull app image
+  community.docker.docker_image:
+    name: "{{ resolved_image }}"
+    source: pull
+    force_source: true
+
+- name: Deploy Docker Compose file
+  template:
+    src: compose.yml.j2
+    dest: "{{ app_dir }}/compose.yml"
+    mode: "0644"
+
+- name: Start services
+  community.docker.docker_compose_v2:
+    project_src: "{{ app_dir }}"
+    files:
+      - compose.yml
+    state: present
