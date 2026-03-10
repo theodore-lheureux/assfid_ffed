@@ -24,6 +24,21 @@ cargo portainer   # start local Portainer UI and open browser
 
 ## Deployment
 
+### Prerequisites
+
+- Connected to the same LAN as the Jetson (or via VPN)
+- The Jetson resolves as `jetson.lan` and is reachable via SSH as `sm` using `~/.ssh/assfid_ffed`. Get the private key from a team member and place it at `~/.ssh/assfid_ffed`:
+  ```sh
+  chmod 600 ~/.ssh/assfid_ffed
+  ```
+- `ansible/group_vars/all/vault.yml` — Ansible vault file containing secrets (`vault_become_password`, `vault_rabbitmq_password`, `ghcr_token`). Get this from a team member.
+- `~/.ffed_vault_pass` — plaintext file containing the vault decryption password
+
+```sh
+echo 'your-vault-password' > ~/.ffed_vault_pass
+chmod 600 ~/.ffed_vault_pass
+```
+
 `cargo deploy` runs the Ansible playbook which:
 1. Installs Docker on the Jetson (if needed)
 2. Deploys RabbitMQ, the app, and the Portainer agent via Docker Compose
