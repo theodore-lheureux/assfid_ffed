@@ -2,6 +2,8 @@ services:
   portainer:
     image: portainer/portainer-ce:latest
     restart: unless-stopped
+    environment:
+      AGENT_SECRET: ${PORTAINER_AGENT_SECRET}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
@@ -20,38 +22,77 @@ services:
       - portainer
     environment:
       PORTAINER_ADMIN_PASSWORD: ${PORTAINER_ADMIN_PASSWORD}
+      PORTAINER_ENDPOINT_NAME: ${PORTAINER_ENDPOINT_NAME:-Jetson}
+      PORTAINER_AGENT_URL: ${PORTAINER_AGENT_URL:-jetson.local:9001}
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
+        set -eu
+
         BASE=http://portainer:9000
 
         echo "Waiting for Portainer to be ready..."
         until curl -sf $$BASE/api/status > /dev/null; do sleep 2; done
 
-        INIT_RESP=$$(curl -s -X POST $$BASE/api/users/admin/init \
+        INIT_CODE=$$(curl -sS -o /tmp/portainer-init-admin.json -w '%{http_code}' -X POST $$BASE/api/users/admin/init \
           -H 'Content-Type: application/json' \
           -d "{\"Username\":\"admin\",\"Password\":\"$$PORTAINER_ADMIN_PASSWORD\"}")
 
-        TOKEN=$$(curl -s -X POST $$BASE/api/auth \
+        if [ "$$INIT_CODE" != "200" ] && [ "$$INIT_CODE" != "409" ]; then
+          echo "Portainer admin init failed with HTTP $$INIT_CODE"
+          cat /tmp/portainer-init-admin.json
+          exit 1
+        fi
+
+        TOKEN=$$(curl -sS -X POST $$BASE/api/auth \
           -H 'Content-Type: application/json' \
           -d "{\"username\":\"admin\",\"password\":\"$$PORTAINER_ADMIN_PASSWORD\"}" | \
           sed 's/.*"jwt":"\([^"]*\)".*/\1/')
 
-        EXISTING=$$(curl -s -H "Authorization: Bearer $$TOKEN" \
-          $$BASE/api/endpoints | grep -ci 'jetson' || true)
+        if [ -z "$$TOKEN" ]; then
+          echo "Failed to authenticate to Portainer"
+          exit 1
+        fi
+
+        echo "Checking Jetson agent reachability at $$PORTAINER_AGENT_URL..."
+        if ! curl -kfsS "https://$$PORTAINER_AGENT_URL/ping" > /dev/null; then
+          echo "Jetson agent is not reachable from the init container at https://$$PORTAINER_AGENT_URL/ping"
+          echo "If jetson.local is an mDNS-only hostname, set PORTAINER_AGENT_URL to a routable IP:9001 before starting Portainer."
+          exit 1
+        fi
+
+        EXISTING=$$(curl -sS -H "Authorization: Bearer $$TOKEN" \
+          $$BASE/api/endpoints | grep -c "\"Name\":\"$$PORTAINER_ENDPOINT_NAME\"" || true)
 
         if [ "$$EXISTING" = "0" ]; then
-          curl -s -X POST $$BASE/api/endpoints \
+          CREATE_CODE=$$(curl -sS -o /tmp/portainer-create-endpoint.json -w '%{http_code}' -X POST $$BASE/api/endpoints \
             -H "Authorization: Bearer $$TOKEN" \
-            -F 'Name=Jetson' \
+            -F "Name=$$PORTAINER_ENDPOINT_NAME" \
             -F 'EndpointCreationType=2' \
-            -F 'URL=tcp://jetson.lan:9001' \
+            -F 'ContainerEngine=docker' \
+            -F "URL=tcp://$$PORTAINER_AGENT_URL" \
             -F 'TLS=true' \
             -F 'TLSSkipVerify=true' \
-            -F 'TLSSkipClientVerify=true' > /dev/null
+            -F 'TLSSkipClientVerify=true')
+
+          if [ "$$CREATE_CODE" != "200" ] && [ "$$CREATE_CODE" != "201" ]; then
+            echo "Jetson endpoint creation failed with HTTP $$CREATE_CODE"
+            cat /tmp/portainer-create-endpoint.json
+            if grep -qi 'already paired with another portainer instance' /tmp/portainer-create-endpoint.json; then
+              echo ""
+              echo "Remediation:"
+              echo "1) Stop any old Portainer server still connected to this agent."
+              echo "2) Restart the portainer_agent container on the Jetson to clear in-memory pairing."
+              echo "3) Re-run this stack to pair with the current Portainer instance."
+              echo ""
+              echo "If you need multiple Portainer servers to access the same agent, set AGENT_SECRET on both the Portainer server and the agent."
+            fi
+            exit 1
+          fi
+
           echo "Jetson endpoint added."
         else
-          echo "Jetson endpoint already exists, skipping."
+          echo "$$PORTAINER_ENDPOINT_NAME endpoint already exists, skipping."
         fi
 
 volumes:

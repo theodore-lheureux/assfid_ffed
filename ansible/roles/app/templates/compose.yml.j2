@@ -21,10 +21,9 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
-    environment:
-      RABBITMQ_URL: "amqp://{{ rabbitmq_user }}:{{ rabbitmq_password }}@rabbitmq:{{ rabbitmq_port }}/"
     volumes:
       - /dev/bus/usb:/dev/bus/usb
+      - {{ app_dir }}/config.toml:/etc/ffed/config.toml:ro
     runtime: nvidia
     deploy:
       resources:
@@ -35,6 +34,8 @@ services:
   portainer_agent:
     image: portainer/agent:latest
     restart: unless-stopped
+    environment:
+      AGENT_SECRET: "{{ portainer_agent_secret }}"
     ports:
       - "9001:9001"
     volumes:

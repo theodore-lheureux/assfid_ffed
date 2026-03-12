@@ -1,11 +1,13 @@
 # assfid_ffed
 
-RAW image processing pipeline for the CubeSat ground station. Runs on a Jetson Orin Nano, converting camera RAW files (ARW) to TIFF using CUDA-accelerated debayering via NPP.
+CubeSat image processing pipeline for the Jetson Orin Nano. Captures RAW images (ARW) via gphoto2, converts to TIFF with CUDA-accelerated debayering, and dispatches results through RabbitMQ.
 
 ## Architecture
 
-- **App**: Rust binary, built for `aarch64` with CUDA/NPP acceleration
-- **Message queue**: RabbitMQ (job dispatch)
+- **Capture**: gphoto2 (camera) or mock (file-based, for testing)
+- **Pipeline**: RAW → debayer (NPP/CUDA on Jetson, CPU fallback) → TIFF
+- **Queue**: RabbitMQ — converted TIFFs are published to `tiff_queue`
+- **Scheduling**: configurable interval (default 45s), optional start time or immediate trigger
 - **Deploy target**: Jetson Orin Nano via Docker + Ansible
 
 ## Requirements
@@ -18,16 +20,34 @@ RAW image processing pipeline for the CubeSat ground station. Runs on a Jetson O
 ## Commands
 
 ```sh
-cargo deploy      # deploy to the Jetson via Ansible
-cargo portainer   # start local Portainer UI and open browser
+cargo run                      # run with defaults (mock capture + mock queue)
+cargo run -- config.mock.toml  # run with mock config explicitly
+cargo run -- config.toml       # run with production config (needs RabbitMQ + camera)
+cargo deploy                   # deploy to the Jetson via Ansible
+cargo portainer                # start local Portainer UI and open browser
 ```
+
+## Configuration
+
+The app is configured via a TOML file passed as the first argument. See `config.mock.toml` for local testing and `config.toml` for production. Key options:
+
+| Section | Key | Default | Description |
+|---------|-----|---------|-------------|
+| `capture` | `source` | `mock` | `mock` or `gphoto2` |
+| `capture` | `interval_secs` | `45` | Seconds between captures |
+| `capture` | `start_time` | none | `HH:MM:SS` to delay start |
+| `capture` | `mock_file` | `input.arw` | File to use in mock mode |
+| `queue` | `backend` | `mock` | `mock` or `rabbitmq` |
+| `queue` | `rabbitmq_url` | — | AMQP connection string |
+| `pipeline` | `debayer` | `true` | Enable debayering |
+| `pipeline` | `compression` | `none` | `none`, `lzw`, or `deflate` |
 
 ## Deployment
 
 ### Prerequisites
 
 - Connected to the same LAN as the Jetson (or via VPN)
-- The Jetson resolves as `jetson.lan` and is reachable via SSH as `sm` using `~/.ssh/assfid_ffed`. Get the private key from a team member and place it at `~/.ssh/assfid_ffed`:
+- The Jetson resolves as `jetson.local` and is reachable via SSH as `sm` using `~/.ssh/assfid_ffed`. Get the private key from a team member and place it at `~/.ssh/assfid_ffed`:
   ```sh
   chmod 600 ~/.ssh/assfid_ffed
   ```

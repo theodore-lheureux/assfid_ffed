@@ -24,6 +24,7 @@ FROM nvcr.io/nvidia/l4t-base:r36.2.0
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cuda-libraries-12-2 \
+    gphoto2 \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/usr/local/cuda/bin:${PATH}"
@@ -31,4 +32,4 @@ ENV LD_LIBRARY_PATH="/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"
 
 COPY --from=builder /workspace/target/release/assfid_ffed /usr/local/bin/assfid_ffed
 
-CMD ["/usr/local/bin/assfid_ffed"]
+CMD ["/usr/local/bin/assfid_ffed", "/etc/ffed/config.toml"]

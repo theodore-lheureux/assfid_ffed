@@ -1,0 +1,11 @@
+[capture]
+source = "mock"
+interval_secs = 45
+mock_file = "input.arw"
+
+[queue]
+backend = "mock"
+
+[pipeline]
+debayer = true
+compression = "none"

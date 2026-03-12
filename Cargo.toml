@@ -16,6 +16,12 @@ tracing = "0.1.41"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1.0.100"
 bayer = { version = "0.1", features = ["rayon"] }
+lapin = "2"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+chrono = "0.4"
+futures-lite = "2"
 
 
 [dev-dependencies]

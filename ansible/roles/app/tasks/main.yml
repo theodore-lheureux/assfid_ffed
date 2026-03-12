@@ -40,6 +40,12 @@
     dest: "{{ app_dir }}/compose.yml"
     mode: "0644"
 
+- name: Deploy app config
+  template:
+    src: config.toml.j2
+    dest: "{{ app_dir }}/config.toml"
+    mode: "0644"
+
 - name: Start services
   community.docker.docker_compose_v2:
     project_src: "{{ app_dir }}"

@@ -3,5 +3,20 @@
 	"build": {
 		"dockerfile": "Dockerfile"
 	},
-	"remoteUser": "root"
+	"remoteUser": "root",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"rust-lang.rust-analyzer",
+				"vadimcn.vscode-lldb",
+				"tamasfe.even-better-toml",
+				"serayuzgur.crates"
+			],
+			"settings": {
+				"rust-analyzer.checkOnSave.command": "clippy"
+			}
+		}
+	},
+	"forwardPorts": [8080, 5672],
+	"postCreateCommand": "rustup component add rustfmt clippy"
 }

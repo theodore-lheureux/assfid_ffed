@@ -1,0 +1,13 @@
+[capture]
+source = "gphoto2"
+interval_secs = 45
+# start_time = "14:30:00"  # uncomment to schedule start
+output_dir = "/tmp/ffed_captures"
+
+[queue]
+backend = "rabbitmq"
+rabbitmq_url = "amqp://ffed:password@rabbitmq:5672/"
+
+[pipeline]
+debayer = true
+compression = "none"
