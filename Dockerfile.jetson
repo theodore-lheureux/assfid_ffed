@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     curl \
     git \
+    clang \
+    libclang-dev \
     cuda-toolkit-12-2 \
     && rm -rf /var/lib/apt/lists/*
 
@@ -17,7 +19,11 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain stable
 WORKDIR /workspace
 COPY . .
 
-RUN cargo build --release
+RUN set -eux; \
+    LIBCLANG_PATH="$(dirname "$(find /usr -name 'libclang.so*' | head -n1)")"; \
+    test -n "${LIBCLANG_PATH}"; \
+    export LIBCLANG_PATH; \
+    cargo build --release
 
 # ---- runtime image ----
 FROM nvcr.io/nvidia/l4t-base:r36.2.0
@@ -28,7 +34,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/usr/local/cuda/bin:${PATH}"
-ENV LD_LIBRARY_PATH="/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"
+ENV LD_LIBRARY_PATH="/usr/local/cuda/lib64"
 
 COPY --from=builder /workspace/target/release/assfid_ffed /usr/local/bin/assfid_ffed
 
