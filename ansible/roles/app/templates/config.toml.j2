@@ -8,7 +8,7 @@ output_dir = "/tmp/ffed_captures"
 
 [queue]
 backend = "rabbitmq"
-rabbitmq_url = "amqp://{{ rabbitmq_user }}:{{ rabbitmq_password }}@rabbitmq:{{ rabbitmq_port }}/"
+rabbitmq_url = "amqp://{{ rabbitmq_user }}:{{ rabbitmq_password }}@rabbitmq:{{ rabbitmq_port }}/%2f"
 
 [pipeline]
 debayer = true

@@ -6,6 +6,11 @@ rabbitmq_port: 5672
 app_dir: /opt/ffed_protosat
 app_image_registry: ghcr.io
 app_image_repo: theodore-lheureux/assfid_ffed
+app_build_local: false
+app_skip_local_build: false
+app_local_build_platform: linux/arm64
+app_local_image_name: assfid_ffed:local
+app_local_image_archive: /tmp/assfid_ffed-jetson-image.tar
 portainer_agent_secret: "{{ vault_portainer_agent_secret }}"
 # app_image_tag is intentionally not set here — it is resolved in order:
 #   1. -e app_image_tag=<tag> on the CLI

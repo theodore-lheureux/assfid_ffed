@@ -69,7 +69,7 @@ fn default_queue_backend() -> QueueBackend {
 }
 
 fn default_rabbitmq_url() -> String {
-    "amqp://ffed:password@localhost:5672/".to_string()
+    "amqp://ffed:password@localhost:5672/%2f".to_string()
 }
 
 fn default_compression() -> String {

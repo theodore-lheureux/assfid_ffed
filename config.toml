@@ -6,7 +6,7 @@ output_dir = "/tmp/ffed_captures"
 
 [queue]
 backend = "rabbitmq"
-rabbitmq_url = "amqp://ffed:password@rabbitmq:5672/"
+rabbitmq_url = "amqp://ffed:password@rabbitmq:5672/%2f"
 
 [pipeline]
 debayer = true

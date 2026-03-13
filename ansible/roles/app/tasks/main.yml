@@ -19,20 +19,44 @@
 
 - name: Resolve image tag (CLI override wins, then deploy.env, then 'latest')
   set_fact:
-    resolved_image_tag: "{{ app_image_tag | default(deploy_env.APP_IMAGE_TAG) | default('latest') }}"
-    resolved_image: "{{ app_image_registry }}/{{ app_image_repo }}:{{ app_image_tag | default(deploy_env.APP_IMAGE_TAG) | default('latest') }}"
+    resolved_image_tag: "{{ (app_build_local | bool) | ternary('local', app_image_tag | default(deploy_env.APP_IMAGE_TAG) | default('latest')) }}"
+    resolved_image: "{{ (app_build_local | bool) | ternary(app_local_image_name, app_image_registry ~ '/' ~ app_image_repo ~ ':' ~ (app_image_tag | default(deploy_env.APP_IMAGE_TAG) | default('latest'))) }}"
 
 - name: Log into GHCR
   community.docker.docker_login:
     registry: "{{ app_image_registry }}"
     username: "{{ ghcr_username }}"
     password: "{{ ghcr_token }}"
+  when: not (app_build_local | bool)
 
 - name: Pull app image
   community.docker.docker_image:
     name: "{{ resolved_image }}"
     source: pull
     force_source: true
+  when: not (app_build_local | bool)
+
+- name: Copy locally built app image archive to Jetson
+  copy:
+    src: "{{ app_local_image_archive }}"
+    dest: "/tmp/{{ app_local_image_archive | basename }}"
+    mode: "0644"
+  when: app_build_local | bool
+
+- name: Load locally built app image on Jetson
+  command:
+    argv:
+      - docker
+      - load
+      - -i
+      - "/tmp/{{ app_local_image_archive | basename }}"
+  when: app_build_local | bool
+
+- name: Remove transferred app image archive from Jetson
+  file:
+    path: "/tmp/{{ app_local_image_archive | basename }}"
+    state: absent
+  when: app_build_local | bool
 
 - name: Deploy Docker Compose file
   template:

@@ -20,8 +20,8 @@ services:
     restart: unless-stopped
     depends_on:
       rabbitmq:
-        condition: service_healthy
-    volumes:
+    devices:
+      - /dev/bus/usb:/dev/bus/usb
       - /dev/bus/usb:/dev/bus/usb
       - {{ app_dir }}/config.toml:/etc/ffed/config.toml:ro
     runtime: nvidia

@@ -26,6 +26,53 @@
         msg: "Aborted by user."
       when: "'behind' in git_status.stdout and user_confirm.user_input | lower != 'yes'"
 
+    - name: Verify Docker is available for local image build
+      command:
+        argv:
+          - docker
+          - version
+      changed_when: false
+      when: app_build_local | bool and not (app_skip_local_build | bool)
+
+    - name: Verify Docker Buildx is available for local image build
+      command:
+        argv:
+          - docker
+          - buildx
+          - version
+      changed_when: false
+      when: app_build_local | bool and not (app_skip_local_build | bool)
+
+    - name: Build Jetson app image locally
+      command:
+        argv:
+          - docker
+          - buildx
+          - build
+          - --platform
+          - "{{ app_local_build_platform }}"
+          - --progress
+          - plain
+          - --load
+          - -f
+          - Dockerfile.jetson
+          - -t
+          - "{{ app_local_image_name }}"
+          - .
+      args:
+        chdir: "{{ playbook_dir }}/.."
+      when: app_build_local | bool and not (app_skip_local_build | bool)
+
+    - name: Export locally built Jetson image
+      command:
+        argv:
+          - docker
+          - save
+          - -o
+          - "{{ app_local_image_archive }}"
+          - "{{ app_local_image_name }}"
+      when: app_build_local | bool and not (app_skip_local_build | bool)
+
 - name: Setup Jetson image pipeline
   hosts: jetson
   become: true
