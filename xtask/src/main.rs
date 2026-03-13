@@ -60,22 +60,25 @@ fn deploy_local() {
     run(Command::new("docker")
         .args(["buildx", "version"]));
 
-    run(Command::new("docker")
-        .current_dir(&root)
-        .args([
-            "buildx",
-            "build",
-            "--platform",
-            LOCAL_IMAGE_PLATFORM,
-            "--progress",
-            "plain",
-            "--load",
-            "-f",
-            "Dockerfile.jetson",
-            "-t",
-            LOCAL_IMAGE_NAME,
-            ".",
-        ]));
+    let mut build = Command::new("docker");
+    build.current_dir(&root);
+    build.args([
+        "buildx",
+        "build",
+        "--platform",
+        LOCAL_IMAGE_PLATFORM,
+        "--progress",
+        "plain",
+    ]);
+    build.args([
+        "--load",
+        "-f",
+        "Dockerfile.jetson",
+        "-t",
+        LOCAL_IMAGE_NAME,
+        ".",
+    ]);
+    run(&mut build);
 
     if let Some(parent) = Path::new(LOCAL_IMAGE_ARCHIVE).parent() {
         std::fs::create_dir_all(parent).unwrap_or_else(|e| {

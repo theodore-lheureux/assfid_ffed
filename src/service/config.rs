@@ -57,7 +57,7 @@ fn default_capture_source() -> CaptureSource {
 }
 
 fn default_capture_interval() -> u64 {
-    45
+    15
 }
 
 fn default_output_dir() -> PathBuf {

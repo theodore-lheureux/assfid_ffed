@@ -1,0 +1,9 @@
+.git
+.github
+.vscode
+.devcontainer
+target
+assfid-ffed-dashboard
+.DS_Store
+portainer
+ansible

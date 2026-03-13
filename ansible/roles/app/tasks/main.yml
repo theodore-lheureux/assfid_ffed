@@ -4,6 +4,12 @@
     state: directory
     mode: "0755"
 
+- name: Create capture directory on Jetson host
+  file:
+    path: "{{ app_dir }}/captures"
+    state: directory
+    mode: "0775"
+
 - name: Load deploy.env defaults
   community.general.read_csv:
     path: "{{ playbook_dir }}/../deploy.env"

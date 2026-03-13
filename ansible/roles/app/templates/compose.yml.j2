@@ -20,9 +20,11 @@ services:
     restart: unless-stopped
     depends_on:
       rabbitmq:
+        condition: service_healthy
     devices:
       - /dev/bus/usb:/dev/bus/usb
-      - /dev/bus/usb:/dev/bus/usb
+    volumes:
+      - {{ app_dir }}/captures:/captures
       - {{ app_dir }}/config.toml:/etc/ffed/config.toml:ro
     runtime: nvidia
     deploy:

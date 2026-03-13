@@ -2,6 +2,7 @@ rabbitmq_user: ffed
 rabbitmq_password: "{{ vault_rabbitmq_password }}"
 rabbitmq_vhost: /
 rabbitmq_port: 5672
+capture_interval_secs: 5
 
 app_dir: /opt/ffed_protosat
 app_image_registry: ghcr.io

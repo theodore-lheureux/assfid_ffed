@@ -4,7 +4,7 @@ interval_secs = {{ capture_interval_secs | default(45) }}
 {% if capture_start_time is defined %}
 start_time = "{{ capture_start_time }}"
 {% endif %}
-output_dir = "/tmp/ffed_captures"
+output_dir = "/captures"
 
 [queue]
 backend = "rabbitmq"

@@ -16,9 +16,7 @@ use assfid_ffed::service::{
 
 const TIFF_QUEUE: &str = "tiff_queue";
 const INDICES_QUEUE: &str = "indices_queue";
-const MODEL_DATA_QUEUE: &str = "model_data_queue";
 const INDEX_CONSUMER: &str = "index-calculator";
-const MODEL_DATA_CONSUMER: &str = "model-data";
 
 fn main() -> Result<()> {
     logger::init();
@@ -138,29 +136,9 @@ fn main() -> Result<()> {
                 .await
         });
 
-        let data_queue = Arc::clone(&queue);
-        let data_consumer = tokio::spawn(async move {
-            let publish_queue = Arc::clone(&data_queue);
-            data_queue
-                .subscribe(
-                    TIFF_QUEUE,
-                    MODEL_DATA_CONSUMER,
-                    Box::new(move |delivery: Delivery| {
-                        let q = Arc::clone(&publish_queue);
-                        Box::pin(async move {
-                            q.publish(MODEL_DATA_QUEUE, &delivery.data).await?;
-                            info!("Published data to {}", MODEL_DATA_QUEUE);
-                            Ok(())
-                        })
-                    }),
-                )
-                .await
-        });
-
         tokio::select! {
             r = producer => r??,
             r = index_consumer => r??,
-            r = data_consumer => r??,
         }
 
         Ok(())
