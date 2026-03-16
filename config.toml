@@ -1,6 +1,6 @@
 [capture]
 source = "gphoto2"
-interval_secs = 15
+interval_secs = 60
 # start_time = "14:30:00"  # uncomment to schedule start
 output_dir = "/tmp/ffed_captures"
 

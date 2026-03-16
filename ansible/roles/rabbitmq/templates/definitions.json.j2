@@ -3,18 +3,18 @@
   "rabbitmq_version": "3.13",
   "users": [
     {
-      "name": "{{ rabbitmq_user }}",
-      "password": "{{ rabbitmq_password }}",
+      "name": {{ rabbitmq_user | to_json }},
+      "password": {{ rabbitmq_password | to_json }},
       "tags": ["administrator"]
     }
   ],
   "vhosts": [
-    { "name": "{{ rabbitmq_vhost }}" }
+    { "name": {{ rabbitmq_vhost | to_json }} }
   ],
   "permissions": [
     {
-      "user": "{{ rabbitmq_user }}",
-      "vhost": "{{ rabbitmq_vhost }}",
+      "user": {{ rabbitmq_user | to_json }},
+      "vhost": {{ rabbitmq_vhost | to_json }},
       "configure": ".*",
       "write": ".*",
       "read": ".*"
@@ -23,28 +23,28 @@
   "queues": [
     {
       "name": "tiff_queue",
-      "vhost": "{{ rabbitmq_vhost }}",
+      "vhost": {{ rabbitmq_vhost | to_json }},
       "durable": true,
       "auto_delete": false,
       "arguments": {}
     },
     {
       "name": "model_data_queue",
-      "vhost": "{{ rabbitmq_vhost }}",
+      "vhost": {{ rabbitmq_vhost | to_json }},
       "durable": true,
       "auto_delete": false,
       "arguments": {}
     },
     {
       "name": "indices_queue",
-      "vhost": "{{ rabbitmq_vhost }}",
+      "vhost": {{ rabbitmq_vhost | to_json }},
       "durable": true,
       "auto_delete": false,
       "arguments": {}
     },
     {
       "name": "transmission_queue",
-      "vhost": "{{ rabbitmq_vhost }}",
+      "vhost": {{ rabbitmq_vhost | to_json }},
       "durable": true,
       "auto_delete": false,
       "arguments": {}

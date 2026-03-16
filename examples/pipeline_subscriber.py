@@ -3,6 +3,7 @@ import argparse
 import datetime as dt
 import io
 import json
+import os
 import sys
 import uuid
 
@@ -43,7 +44,46 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Do not open TIFF previews for image streams.",
     )
+    parser.add_argument(
+        "-w",
+        "--write",
+        action="store_true",
+        help="Write each consumed payload to disk.",
+    )
+    parser.add_argument(
+        "--write-dir",
+        default="pipeline-dumps",
+        help="Directory where payload files are written when -w is enabled.",
+    )
     return parser.parse_args()
+
+
+def write_payload(write_dir: str, stream: str, payload: bytes,
+                  content_type: str | None = None) -> str:
+    timestamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
+    stream_dir = os.path.join(write_dir, stream)
+    os.makedirs(stream_dir, exist_ok=True)
+
+    if content_type == "application/json":
+        extension = ".json"
+    elif content_type == "image/png":
+        extension = ".png"
+    elif content_type in {"image/tiff", "image/tif"}:
+        extension = ".tiff"
+    elif stream == "tiff_queue":
+        extension = ".tiff"
+    elif stream == "model_data_queue":
+        extension = ".png"
+    elif stream == "indices_queue":
+        extension = ".json"
+    else:
+        extension = ".bin"
+
+    file_name = f"{timestamp}_{uuid.uuid4().hex[:8]}{extension}"
+    path = os.path.join(stream_dir, file_name)
+    with open(path, "wb") as handle:
+        handle.write(payload)
+    return path
 
 
 def make_preview(payload: bytes, max_bytes: int) -> str:
@@ -101,8 +141,15 @@ def main() -> int:
             timestamp = dt.datetime.now(dt.timezone.utc).isoformat()
             preview = make_preview(body, args.max_preview_bytes)
             image_preview = None
-            if not args.no_preview and stream in {"tiff_queue", "model_data_queue"}:
+            output_path = None
+            ct = getattr(properties, "content_type", None)
+            if not args.no_preview and ct != "application/json" and stream in {"tiff_queue", "model_data_queue"}:
                 image_preview = preview_tiff(stream, body)
+            if args.write:
+                output_path = write_payload(
+                    args.write_dir, stream, body,
+                    content_type=getattr(properties, "content_type", None),
+                )
             if args.json_lines:
                 record = {
                     "ts": timestamp,
@@ -112,13 +159,14 @@ def main() -> int:
                     "delivery_mode": getattr(properties, "delivery_mode", None),
                     "preview": preview,
                     "image_preview": image_preview,
+                    "written_to": output_path,
                 }
                 print(json.dumps(record, ensure_ascii=True))
             else:
                 print(
                     f"[{timestamp}] stream={stream} bytes={len(body)} "
                     f"content_type={getattr(properties, 'content_type', None)} "
-                    f"image_preview={image_preview} preview={preview}"
+                    f"image_preview={image_preview} written_to={output_path} preview={preview}"
                 )
             ch.basic_ack(delivery_tag=method.delivery_tag)
 

@@ -8,7 +8,7 @@ output_dir = "/captures"
 
 [queue]
 backend = "rabbitmq"
-rabbitmq_url = "amqp://{{ rabbitmq_user }}:{{ rabbitmq_password }}@rabbitmq:{{ rabbitmq_port }}/%2f"
+rabbitmq_url = "amqp://{{ rabbitmq_user | urlencode }}:{{ rabbitmq_password | urlencode }}@rabbitmq:{{ rabbitmq_port }}/%2f"
 
 [pipeline]
 debayer = true

@@ -10,10 +10,11 @@ services:
       - {{ app_dir }}/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
       - {{ app_dir }}/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      start_period: 45s
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 12
 
   app:
     image: {{ resolved_image }}
